@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1db954"> <title>Music Quiz</title>
+    <style>
+        /* --- BASIS STIJL --- */
+        body {
+            font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            justify-content: center;
+        }
+
+        /* --- VIDEO CONTAINER --- */
+        #video-container {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        #spoiler-guard {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        /* Muziek Golfjes Animatie */
+        .music-waves {
+            display: flex;
+            align-items: center;
+            height: 30px;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .music-waves.playing { opacity: 1; }
+        .bar {
+            width: 6px;
+            background: #1db954;
+            border-radius: 4px;
+            animation: bounce 1s infinite ease-in-out;
+        }
+        .bar:nth-child(1) { animation-delay: 0.1s; height: 10px; }
+        .bar:nth-child(2) { animation-delay: 0.3s; height: 20px; }
+        .bar:nth-child(3) { animation-delay: 0.5s; height: 15px; }
+        .bar:nth-child(4) { animation-delay: 0.2s; height: 25px; }
+
+        @keyframes bounce {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1.2); }
+        }
+
+        /* --- DE VRAAG KAART --- */
+        .card {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .tag {
+            background: #333;
+            color: #bbb;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .q-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        /* --- HET ANTWOORD --- */
+        #answer-area {
+            background: #282828;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            display: none;
+        }
+        #answer-area.visible {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+        .a-text { color: #1db954; font-size: 1.2rem; font-weight: bold; }
+        .info-text { color: #b3b3b3; font-size: 0.9rem; margin-top: 5px; }
+
+        /* --- KNOPPEN --- */
+        .controls {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:active { transform: scale(0.96); }
+
+        .btn-play { background-color: #1db954; color: black; font-size: 1.1rem; }
+        .btn-show { background-color: #333; color: white; }
+        .btn-next { background-color: #2980b9; color: white; margin-top: 10px; }
+        
+        .btn-replay {
+            background: transparent;
+            color: #777;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        .btn-replay:hover { color: #fff; }
+        .icon { font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+    <div id="video-container">
+        <div id="player"></div>
+        <div id="spoiler-guard">
+            <div class="music-waves" id="waves">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="tag" id="disp-type">Laden...</div>
+        <div class="q-text" id="disp-question"></div>
+        
+        <div id="answer-area">
+            <div class="a-text" id="disp-answer"></div>
+            <div class="info-text" id="disp-info"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-play" onclick="toggleAudio()">
+            <span class="icon">▶</span> <span id="btn-play-text">Afspelen</span>
+        </button>
+        
+        <button class="btn-show" onclick="revealAnswer()" id="btn-reveal">
+            <span class="icon">👁</span> Toon Antwoord
+        </button>
+
+        <button class="btn-next" onclick="nextQuestion()" id="btn-next" style="display:none">
+            Volgende Vraag <span class="icon">➡</span>
+        </button>
+        
+        <button class="btn-replay" onclick="replayFragment()">
+            ↺ Fragment herhalen
+        </button>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="logic.js"></script>
+
+</body>
+</html>
