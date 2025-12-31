@@ -1,4 +1,4 @@
-// data.js #test
+// data.js
 const quizData = [
     {
         "Type": "Intro",
@@ -154,4 +154,5 @@ const quizData = [
         "Info": ""
     }
 ]
+
 
